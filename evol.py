@@ -1,5 +1,5 @@
 from PIL import Image
-from random import randrange
+from random import randint
 from math import ceil
 from copy import deepcopy
 import numpy as np
@@ -12,8 +12,9 @@ width, height = 0, 0
 speciments = []
 top_speciments = []
 best = []
-generation = 134800
+generation = 1
 
+DIV_FACTOR = 10
 
 
 def load_image(path):
@@ -25,16 +26,16 @@ def load_image(path):
 
 
 def mutate():
-	global speciments, width, height, image, best
+	global speciments, width, height, image, best, DIV_FACTOR
 	for spec in speciments:
-		x = randrange(width - 1)
-		y = randrange(height - 1)
-		w = min(randrange(1, width - x ), ceil(width // 60))
-		h = min(randrange(1, height - y ), ceil(height // 60))
+		x = randint(0, width - 2)
+		y = randint(0, height - 2)
+		w = min(randint(1, width - x - 1), ceil(width / DIV_FACTOR))
+		h = min(randint(1, height - y - 1), ceil(height / DIV_FACTOR))
 		start = y*width + x
-		color_R = randrange(256)
-		color_G = randrange(256)
-		color_B = randrange(256)
+		color_R = randint(0, 255)
+		color_G = randint(0, 255)
+		color_B = randint(0, 255)
 		for j in range(h):
 			for i in range(w):
 				current = start + width*j+i
@@ -81,7 +82,7 @@ def show():
 	if generation % 100 != 0:
 		return
 	data = [(x[0], x[1], x[2]) for x in best]
-	with open("pictures/Generation_{0}.jpg".format(generation), 'wb') as f:
+	with open("pictures4/Generation_{0}.jpg".format(generation), 'wb') as f:
 		img = Image.new("RGB", (width, height))
 		img.putdata(data)
 		img.save(f)
@@ -89,27 +90,26 @@ def show():
 
 
 def evolve():
-	global generation, speciments, width, height
+	global generation, speciments, width, height, DIV_FACTOR
 	im = Image.new("RGB", (width, height), "black").getdata()
 	speciments = [np.array(list(im)) for i in range(COUNT*COUNT)]
 
-	im = Image.open('pictures/Generation_134800.jpg').getdata()
-	speciments.append(np.array(list(im)))
-
 	while True:
 		mutate()
+
 		generation+=1
 		if generation % 10 == 0:
 			print("GENERATION: ", generation)
-		
+		if generation % (20000 * DIV_FACTOR // 5) == 0:
+			DIV_FACTOR *= 2
+
 		score()
 
 		show()
-		#if generation >= 20: 
-		#	break
+		
 		cross()
 
 
 
-load_image("lena.jpg")
+load_image("mona.jpg")
 evolve()
